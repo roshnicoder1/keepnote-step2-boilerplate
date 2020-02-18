@@ -1,11 +1,79 @@
 package com.stackroute.keepnote.controller;
+import java.time.LocalDateTime;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.stackroute.keepnote.dao.NoteDAO;
+import com.stackroute.keepnote.model.Note;
+
 
 /*
  * Annotate the class with @Controller annotation.@Controller annotation is used to mark 
  * any POJO class as a controller so that Spring can recognize this class as a Controller
  */
-
+@Controller
 public class NoteController {
+	@Autowired
+	private NoteDAO noteDao;
+	
+	@Autowired
+	private Note note;
+	
+	public NoteController() {
+		super();
+	}
+
+	public NoteController(NoteDAO noteDao) {
+		this.noteDao=noteDao;
+	}
+
+	
+	@GetMapping(value= "/")
+	public String indexPage(ModelMap model) {
+		model.addAttribute("noteList", noteDao.getAllNotes());
+		return "index";
+	}
+	
+	
+	@PostMapping(value="/add")
+	public String addNote(@ModelAttribute("note") Note note, ModelMap model) {
+
+		if (note.getNoteContent().isEmpty()) {
+			model.addAttribute("errorMessage", "Fields should not be empty");
+			return "index";
+		} else {
+			note.setCreatedAt(LocalDateTime.now());
+			noteDao.saveNote(note);
+			return "redirect:/";
+		}			
+		}
+
+	@RequestMapping("/delete")
+	public String deleteNote(@RequestParam int noteId, ModelMap model) {
+		noteDao.deleteNote(noteId);
+		return "redirect:/";
+
+	}
+	@RequestMapping(value = "/updateNote")
+	public String updateNote(@RequestParam int noteId, ModelMap model) {		
+		model.addAttribute("note", noteDao.getNoteById(noteId));		
+		return "update";
+	}
+
+	@RequestMapping(value = "/update")
+	public String update(@ModelAttribute("note") Note note, ModelMap model) {
+		note.setCreatedAt(LocalDateTime.now());
+		noteDao.UpdateNote(note);
+		return "redirect:/";
+	}
+
 	/*
 	 * From the problem statement, we can understand that the application requires
 	 * us to implement the following functionalities.
